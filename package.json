@@ -1,0 +1,25 @@
+{
+  "name": "chaiaurbackend",
+  "version": "1.0.0",
+  "description": "a backend at chai aur code - by deepak",
+  "keywords": [
+    "javascript",
+    "backend",
+    "chai"
+  ],
+  "homepage": "https://github.com/Deepaksingh2610/backend-type-of-youtube-clone-with-backend#readme",
+  "bugs": {
+    "url": "https://github.com/Deepaksingh2610/backend-type-of-youtube-clone-with-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepaksingh2610/backend-type-of-youtube-clone-with-backend.git"
+  },
+  "license": "ISC",
+  "author": "Singh Deepak Jitendra",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
