@@ -43,7 +43,7 @@ const registerUser =  asyncHandler(async (req, res)=>{
  // validations
   if(
     [fullName, email, username, password].some((field)=>
-        field?.trim() === " ")
+        field?.trim() === "")
   ){
     throw new ApiError(400, "All fields are required")
   }
@@ -57,7 +57,7 @@ const registerUser =  asyncHandler(async (req, res)=>{
   }
 
   //check images and avatar
-const avatarLocalPath = req.files?.avatar[0]?.path;
+const avatarLocalPath = req.files?.avatar?.[0]?.path;
 // const coverImageLocalPath= req.files?.coverImage[0]?.path;
 
 let coverImageLocalPath;
@@ -94,8 +94,8 @@ if (!avatar) {
 const createdUser = await User.findById(user._id).select(
     "-password -refreshToken"
 )
- if (!createdUser) {
-    throw new ApiError(500, "something went wrong while regsitring")
+    if (!createdUser) {
+    throw new ApiError(500, "Something went wrong while registering the user")
  }
  // check Api response
  return res.status(201).json(
@@ -136,7 +136,7 @@ const loginUser = asyncHandler(async (req, res) =>{
 
    const isPasswordValid = await user.isPasswordCorrect(password)
    if (!isPasswordValid) {
-    throw new ApiError(401, "invalid user credintial ")
+    throw new ApiError(401, "Invalid user credentials")
    }
 
 
@@ -170,7 +170,7 @@ const loginUser = asyncHandler(async (req, res) =>{
    )
 
 })
-
+   
 const logoutUser = asyncHandler(async(req, res)=>{
     //find user and by using id
     await User.findByIdAndUpdate(
@@ -226,7 +226,7 @@ try {
         httpOnly:true,
         secure:true
     }
-    const { accessToken, newRefreshToken}=await generateAccessAndRefereshTokens(user._id)
+    const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefereshTokens(user._id)
     return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -270,7 +270,7 @@ const changeCurrentPassword = asyncHandler(async(req,res)=>{
 const getCurrentUser = asyncHandler(async(req, res)=>{
     return res
     .status(200)
-    .json(200, req.user, "current user fetched successfuly")
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"))
 })
 
 
@@ -296,7 +296,7 @@ const user = await User.findByIdAndUpdate(
 
 return res
 .status(200)
-.json(new ApiResponse(200, "your accountet details is updated"))
+.json(new ApiResponse(200, user, "Account details updated successfully"))
 })
 
 
@@ -449,7 +449,7 @@ return res
 
 //get watch histroy from user using aggrigation pipelines with mongodb
 
-const getWatchHistory = asyncHandler(async(req,res)=>{
+const getWatchHistory = asyncHandler(async(req, res)=>{
   const user = await User.aggregate([
     {
         $match:{
@@ -460,14 +460,14 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
         $lookup:{
             from:"videos",
             localField:"watchHistory",
-            foreignField:_id,
-            as:"watchHistroy",
+            foreignField:"_id",
+            as:"watchHistory",
             pipeline:[
                 {
                     $lookup:{
                         from:"users",
                         localField:"owner",
-                        foreignField:_id,
+                        foreignField:"_id",
                         as:"owner",
                         pipeline:[
                             {
@@ -486,7 +486,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
                             $first:"$owner"
                         }
                     }
-                }  // adding owner fileds 
+                } 
             ]
         }
     }
@@ -494,7 +494,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
 
   return res
   .status(200)
-  .json(new ApiResponse(200, user[0].watchHistory , "watch histroy feteched suucessfully"))
+  .json(new ApiResponse(200, user[0]?.watchHistory || [] , "Watch history fetched successfully"))
 })
 
 

@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
-import { createPlaylist, getUserPlaylists } from "../controllers/playlist.controllers.js";
-
-
 const playlistSchema = new Schema(
     {
         name:{
@@ -20,7 +17,7 @@ const playlistSchema = new Schema(
                ref:"Video"
         }
     ],
-        owners:{
+        owner:{
             type:Schema.Types.ObjectId,
             ref:"User"
         }

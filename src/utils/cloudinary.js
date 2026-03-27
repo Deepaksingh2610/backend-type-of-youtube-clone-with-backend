@@ -10,11 +10,11 @@ cloudinary.config({
     try {
         if(!localFilePath) return null
         //upload file on cloudinary
-      const response= await cloudinary.uploader.upload(localFilePath, {
+      const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type:"auto"
         })
         //file has been uploaded successfuly
-        console.log("file is uploaded on cloudinary", response.url);
+        fs.unlinkSync(localFilePath)
         return response
     } catch (error) {
         fs.unlinkSync(localFilePath) //remove the locally saved temporey files as the upload operation failed
