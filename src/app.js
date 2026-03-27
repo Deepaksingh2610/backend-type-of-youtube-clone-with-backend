@@ -25,6 +25,8 @@ import commentRouter from "./routes/comment.routes.js"
 import likeRouter from "./routes/like.routes.js"
 import playlistRouter from "./routes/playlist.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
+import otpRouter from "./routes/otp.routes.js"
+import notificationRouter from "./routes/notification.routes.js"
 
 // Import ApiError for error comparison
 import { ApiError } from "./utils/ApiError.js"
@@ -32,6 +34,8 @@ import { ApiError } from "./utils/ApiError.js"
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/otp", otpRouter)
+app.use("/api/v1/notifications", notificationRouter)
 app.use("/api/v1/tweets", tweetRouter)
 app.use("/api/v1/subscriptions", subscriptionRouter)
 app.use("/api/v1/videos", videoRouter)

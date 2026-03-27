@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 
 const generateAccessAndRefereshTokens = async(userId)=> {
@@ -20,7 +20,8 @@ const generateAccessAndRefereshTokens = async(userId)=> {
 
 
     } catch (error) {
-        throw new ApiError(500,"Something went wrong while generating refresh and access token")
+        console.error("TOKEN GENERATION ERROR:", error);
+        throw new ApiError(500, `Something went wrong while generating refresh and access token: ${error.message}`)
     }
 }
 
@@ -499,6 +500,43 @@ const getWatchHistory = asyncHandler(async(req, res)=>{
 
 
 
+const toggleDownload = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+
+    if (!isValidObjectId(videoId)) {
+        throw new ApiError(400, "Invalid videoId")
+    }
+
+    const user = await User.findById(req.user?._id)
+    const isDownloaded = user.downloadedVideos.includes(videoId)
+
+    if (isDownloaded) {
+        user.downloadedVideos.pull(videoId)
+    } else {
+        user.downloadedVideos.push(videoId)
+    }
+
+    await user.save({ validateBeforeSave: false })
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { isDownloaded: !isDownloaded }, isDownloaded ? "Removed from downloads" : "Saved to downloads"))
+})
+
+const getDownloadedVideos = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user?._id).populate({
+        path: "downloadedVideos",
+        populate: {
+            path: "owner",
+            select: "username fullName avatar"
+        }
+    })
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user.downloadedVideos, "Downloaded videos fetched successfully"))
+})
+
 export {registerUser,
     loginUser,
     logoutUser,
@@ -509,5 +547,7 @@ export {registerUser,
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    toggleDownload,
+    getDownloadedVideos
 }

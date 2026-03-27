@@ -12,6 +12,8 @@ import Dashboard from './pages/Dashboard'
 import SearchResults from './pages/SearchResults'
 import History from './pages/History'
 import LikedVideos from './pages/LikedVideos'
+import Notifications from './pages/Notifications'
+import Downloads from './pages/Downloads'
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -37,6 +39,8 @@ function App() {
                   <Route path="/search" element={<SearchResults />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/liked" element={<LikedVideos />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/downloads" element={<Downloads />} />
                 </Routes>
               </Layout>
             </PrivateRoute>

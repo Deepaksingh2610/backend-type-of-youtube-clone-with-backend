@@ -12,41 +12,102 @@ const Signup = () => {
     email: '',
     password: '',
   });
-  const [files, setFiles] = useState({ avatar: null, coverImage: null });
+  const [avatar, setAvatar] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
   const [previews, setPreviews] = useState({ avatar: '', coverImage: '' });
-  const [error, setError] = useState('');
+  const [otp, setOtp] = useState("");
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
     if (file) {
-      setFiles({ ...files, [type]: file });
+      if (type === 'avatar') {
+        setAvatar(file);
+      } else {
+        setCoverImage(file);
+      }
       const reader = new FileReader();
       reader.onloadend = () => setPreviews({ ...previews, [type]: reader.result });
       reader.readAsDataURL(file);
     }
   };
 
+  const handleSendOtp = async () => {
+    if (!formData.email) {
+      setError("Please enter your email first");
+      return;
+    }
+    setOtpLoading(true);
+    setError("");
+    try {
+      await axiosInstance.post("/otp/send-otp", { email: formData.email });
+      setIsOtpSent(true);
+      alert("OTP sent to your email!");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to send OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp) {
+      setError("Please enter the OTP");
+      return;
+    }
+    setOtpLoading(true);
+    setError("");
+    try {
+      const response = await axiosInstance.post("/otp/verify-otp", { 
+        email: formData.email, 
+        otp 
+      });
+      if (response.data.data.verified) {
+        setIsVerified(true);
+        alert("Email verified successfully!");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Invalid OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
-    if (!files.avatar) return setError('Avatar is required');
-    
-    setLoading(true);
+    if (!isVerified) {
+      setError("Please verify your email first");
+      return;
+    }
+    if (!avatar) {
+      setError("Avatar is required");
+      setLoading(false);
+      return;
+    }
+
     const data = new FormData();
-    Object.keys(formData).forEach(key => data.append(key, formData[key]));
-    data.append('avatar', files.avatar);
-    if (files.coverImage) data.append('coverImage', files.coverImage);
+    data.append("fullName", formData.fullName);
+    data.append("email", formData.email);
+    data.append("username", formData.username);
+    data.append("password", formData.password);
+    data.append("avatar", avatar);
+    if (coverImage) data.append("coverImage", coverImage);
 
     try {
-      await axiosInstance.post('/users/register', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      await axiosInstance.post("/users/register", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      navigate('/login');
+      navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      console.error("Signup error:", err);
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -63,33 +124,85 @@ const Signup = () => {
         {error && <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg text-sm text-center">{error}</div>}
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col gap-4">
+          <div className="md:col-span-1 flex flex-col gap-4">
+            <h2 className="text-lg font-semibold border-b border-secondary pb-2 mb-2">Account Info</h2>
+            
             <Input
               label="Full Name"
-              placeholder="John Doe"
+              placeholder="Enter your full name"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
               required
             />
-             <Input
+            
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-300">Email</label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="flex-1 bg-secondary border border-secondary p-2 rounded-lg outline-none focus:border-accent disabled:opacity-50"
+                  value={formData.email}
+                  disabled={isOtpSent}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+                {!isVerified && (
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    className="whitespace-nowrap h-[42px]"
+                    onClick={handleSendOtp}
+                    loading={otpLoading && !isOtpSent}
+                    disabled={isOtpSent}
+                  >
+                    {isOtpSent ? "Sent" : "Send OTP"}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {isOtpSent && !isVerified && (
+              <div className="flex flex-col gap-1 animate-in fade-in slide-in-from-top-2">
+                <label className="text-sm font-medium text-gray-300">Enter OTP</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="6-digit code"
+                    className="flex-1 bg-secondary border border-secondary p-2 rounded-lg outline-none focus:border-accent"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="primary" 
+                    onClick={handleVerifyOtp}
+                    loading={otpLoading}
+                  >
+                    Verify
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {isVerified && (
+              <div className="text-sm text-green-500 flex items-center gap-2 font-medium bg-green-500/10 p-2 rounded-lg border border-green-500/20">
+                 ✓ Email Verified Successfully
+              </div>
+            )}
+
+            <Input
               label="Username"
-              placeholder="johndoe"
+              placeholder="Pick a username"
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
               required
             />
-            <Input
-              label="Email"
-              type="email"
-              placeholder="john@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
-            />
+
             <Input
               label="Password"
               type="password"
-              placeholder="••••••••"
+              placeholder="At least 8 characters"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -129,7 +242,14 @@ const Signup = () => {
               </div>
             </div>
             
-            <Button type="submit" loading={loading} className="w-full mt-auto">Create Account</Button>
+            <Button 
+              type="submit" 
+              loading={loading} 
+              className="w-full mt-auto"
+              disabled={!isVerified}
+            >
+              Create Account
+            </Button>
           </div>
         </form>
 

@@ -1,10 +1,9 @@
 import mongoose, { isValidObjectId } from "mongoose"
-import { User } from "../models/user.model.js"
 import { Subscription } from "../models/subscription.model.js"
+import { Notification } from "../models/notification.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
-
 
 const toggleSubscription = asyncHandler(async (req, res) => {
     const { channelId } = req.params
@@ -20,19 +19,27 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
     if (subscribedAlready) {
         await Subscription.findByIdAndDelete(subscribedAlready._id)
-        return res
-            .status(200)
-            .json(new ApiResponse(200, { isSubscribed: false }, "Unsubscribed successfully"))
+    } else {
+        await Subscription.create({
+            subscriber: req.user?._id,
+            channel: channelId
+        })
+
+        // Create Notification
+        if (channelId !== req.user?._id.toString()) {
+            await Notification.create({
+                recipient: channelId,
+                sender: req.user?._id,
+                type: "SUBSCRIBE"
+            })
+        }
     }
 
-    await Subscription.create({
-        subscriber: req.user?._id,
-        channel: channelId
-    })
+    const subscribersCount = await Subscription.countDocuments({ channel: channelId })
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { isSubscribed: true }, "Subscribed successfully"))
+        .json(new ApiResponse(200, { isSubscribed: !subscribedAlready, subscribersCount }, subscribedAlready ? "Unsubscribed" : "Subscribed"))
 })
 
 // controller to return subscriber list of a channel

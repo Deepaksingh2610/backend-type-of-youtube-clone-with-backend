@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
-import { ThumbsUp, Bell, Share2, MoreHorizontal } from 'lucide-react';
+import { ThumbsUp, Bell, Share2, MoreHorizontal, Download as DownloadIcon, CheckCircle } from 'lucide-react';
 import Button from '../components/Button';
 import CommentSection from '../components/CommentSection';
 import { format } from 'date-fns';
@@ -14,6 +14,8 @@ const VideoDetail = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [subscribersCount, setSubscribersCount] = useState(0);
+  const [isDownloaded, setIsDownloaded] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -24,6 +26,12 @@ const VideoDetail = () => {
         setIsLiked(response.data.data.isLiked);
         setLikesCount(response.data.data.likesCount);
         setIsSubscribed(response.data.data.owner?.isSubscribed);
+        setSubscribersCount(response.data.data.owner?.subscribersCount || 0);
+        
+        // Check if already downloaded
+        const userResponse = await axiosInstance.get('/users/downloads');
+        const downloadedIds = userResponse.data.data.map(v => v._id);
+        setIsDownloaded(downloadedIds.includes(videoId));
       } catch (err) {
         console.error('Failed to fetch video', err);
       } finally {
@@ -46,11 +54,21 @@ const VideoDetail = () => {
 
   const handleSubscribeToggle = async () => {
     try {
-      await axiosInstance.post(`/subscriptions/toggle/${video.owner?._id}`);
-      setIsSubscribed(!isSubscribed);
-      // We could also update a local subscriber count state if we had one
+      if (!video.owner?._id) return;
+      const response = await axiosInstance.post(`/subscriptions/c/${video.owner?._id}`);
+      setIsSubscribed(response.data.data.isSubscribed);
+      setSubscribersCount(response.data.data.subscribersCount);
     } catch (err) {
       console.error('Subscribe toggle failed', err);
+    }
+  };
+
+  const handleDownloadToggle = async () => {
+    try {
+      const response = await axiosInstance.post(`/users/toggle-download/${videoId}`);
+      setIsDownloaded(response.data.data.isDownloaded);
+    } catch (err) {
+      console.error('Download toggle failed', err);
     }
   };
 
@@ -81,7 +99,7 @@ const VideoDetail = () => {
              </div>
              <div className="flex flex-col">
                 <span className="font-bold text-lg">{video.owner?.fullName}</span>
-                <span className="text-xs text-gray-400">{video.owner?.subscribersCount} subscribers</span>
+                <span className="text-xs text-gray-400">{subscribersCount} subscribers</span>
              </div>
              {video.owner?._id !== user?._id && (
                 <Button 
@@ -95,6 +113,13 @@ const VideoDetail = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button 
+                onClick={handleDownloadToggle}
+                className={`flex items-center gap-3 px-6 py-2 rounded-full bg-secondary hover:bg-white/10 border border-white/5 transition-all ${isDownloaded ? 'text-green-500 bg-green-500/10 border-green-500/20' : ''}`}
+            >
+                {isDownloaded ? <CheckCircle className="w-5 h-5" /> : <DownloadIcon className="w-5 h-5" />}
+                <span className="font-bold hidden sm:block">{isDownloaded ? "Saved" : "Download"}</span>
+            </button>
             <div className="flex items-center bg-secondary rounded-full overflow-hidden">
                 <button 
                     onClick={handleLikeToggle}

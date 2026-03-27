@@ -1,12 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, User, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../api/axiosInstance';
 
 const Navbar = ({ onMenuClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await axiosInstance.get('/notifications');
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const count = response.data.data.filter(n => !n.isRead).length;
+          setUnreadCount(count);
+        }
+      } catch (err) {
+        console.error('Failed to fetch notifications', err);
+      }
+    };
+    fetchNotificationCount();
+    const interval = setInterval(fetchNotificationCount, 30000);
+    
+    const handleReadEvent = () => setUnreadCount(0);
+    window.addEventListener('notificationsRead', handleReadEvent);
+    
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('notificationsRead', handleReadEvent);
+    };
+  }, [user]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -46,8 +73,16 @@ const Navbar = ({ onMenuClick }) => {
 
       {/* Right */}
       <div className="flex items-center gap-2 sm:gap-4">
-        <button className="p-2 hover:bg-secondary rounded-full hidden sm:block">
-          <Bell className="w-6 h-6" />
+        <button 
+          onClick={() => navigate('/notifications')}
+          className="p-2 hover:bg-secondary rounded-full relative group transition-all"
+        >
+          <Bell className="w-6 h-6 group-hover:text-accent transition-colors" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </button>
         <div className="group relative">
             <div className="w-10 h-10 rounded-full border-2 border-accent p-0.5 cursor-pointer overflow-hidden">

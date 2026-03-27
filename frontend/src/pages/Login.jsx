@@ -24,11 +24,15 @@ const Login = () => {
         password: formData.password
       };
 
-      const response = await axiosInstance.post('/users/login', payload);
+      const response = await axiosInstance.post('/users/login', payload, {
+        withCredentials: true
+      });
       login(response.data.data.user);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      console.error('Login error detail:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
