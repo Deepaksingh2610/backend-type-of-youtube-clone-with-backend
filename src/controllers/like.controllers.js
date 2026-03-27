@@ -18,19 +18,18 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
     if (likedAlready) {
         await Like.findByIdAndDelete(likedAlready._id)
-        return res
-            .status(200)
-            .json(new ApiResponse(200, { isLiked: false }, "Like removed successfully"))
+    } else {
+        await Like.create({
+            video: videoId,
+            likedBy: req.user?._id
+        })
     }
 
-    await Like.create({
-        video: videoId,
-        likedBy: req.user?._id
-    })
+    const likesCount = await Like.countDocuments({ video: videoId })
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { isLiked: true }, "Liked successfully"))
+        .json(new ApiResponse(200, { isLiked: !likedAlready, likesCount }, likedAlready ? "Like removed" : "Liked"))
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {

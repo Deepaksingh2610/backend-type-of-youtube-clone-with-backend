@@ -118,20 +118,124 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    
+
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid videoId")
     }
 
-    const video = await Video.findById(videoId)
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "subscriptions",
+                            localField: "_id",
+                            foreignField: "channel",
+                            as: "subscribers"
+                        }
+                    },
+                    {
+                        $addFields: {
+                            subscribersCount: { $size: "$subscribers" },
+                            isSubscribed: {
+                                $cond: {
+                                    if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                                    then: true,
+                                    else: false
+                                }
+                            }
+                        }
+                    },
+                    {
+                        $project: {
+                            fullName: 1,
+                            username: 1,
+                            avatar: 1,
+                            subscribersCount: 1,
+                            isSubscribed: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                owner: { $first: "$owner" },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                videoFile: 1,
+                title: 1,
+                description: 1,
+                views: 1,
+                createdAt: 1,
+                duration: 1,
+                thumbnail: 1,
+                owner: 1,
+                likesCount: 1,
+                isLiked: 1
+            }
+        }
+    ])
 
-    if (!video) {
+    if (!video?.length) {
         throw new ApiError(404, "Video not found")
+    }
+
+    // Check if the user has already watched this video
+    const user = await User.findById(req.user?._id);
+    const isAlreadyWatched = user?.watchHistory.includes(videoId);
+
+    if (!isAlreadyWatched) {
+        // Increment view count ONLY if user is watching for the first time
+        await Video.findByIdAndUpdate(
+            videoId,
+            {
+                $inc: { views: 1 }
+            }
+        )
+
+        // Add video to user's watch history
+        await User.findByIdAndUpdate(
+            req.user?._id,
+            {
+                $addToSet: {
+                    watchHistory: videoId
+                }
+            }
+        )
     }
 
     return res
         .status(200)
-        .json(new ApiResponse(200, video, "Video fetched successfully"))
+        .json(new ApiResponse(200, video[0], "Video fetched successfully"))
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
