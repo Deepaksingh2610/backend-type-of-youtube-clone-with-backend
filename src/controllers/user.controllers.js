@@ -164,7 +164,7 @@ const loginUser = asyncHandler(async (req, res) =>{
    .json(
     new ApiResponse(
         200,{
-            user:loggedInUser, accessToken,
+            user:loggedUser, accessToken,
             refreshToken
         },
         "user logged in Successfully"
@@ -189,7 +189,8 @@ const logoutUser = asyncHandler(async(req, res)=>{
     )
     const options = {
         httpOnly:true,
-        secure:true
+        secure:true,
+        sameSite: "None"
     }
     
     return res
@@ -226,7 +227,9 @@ try {
     
     const options = {
         httpOnly:true,
-        secure:true
+        secure:true,
+        sameSite: "None"
+     
     }
     const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefereshTokens(user._id)
     return res
