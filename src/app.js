@@ -1,13 +1,8 @@
-import express from "express"
-import cors from "cors"
-import cookieParser from "cookie-parser"
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
-const app = express()
-
-// app.use(cors({
-//     origin: process.env.CORS_ORIGIN,
-//     credentials: true
-// }))
+const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -24,6 +19,15 @@ app.use(cors({
   },
   credentials: true
 }));
+
+app.use(express.json({ limit: "16kb" }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(cookieParser());
+app.use(express.static("public"));
+
+app.get("/", (req, res) => {
+  res.send("API is running successfully");
+});
 // app.use(cors({
 //   origin: function (origin, callback) {
 //     if (!origin || allowedOrigins.includes(origin)) {
@@ -35,15 +39,7 @@ app.use(cors({
 //   credentials: true
 // }));
 
-app.use(cors({...}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-    res.send("API is running successfully");
-});
 
 //routes import
 import userRouter from './routes/user.routes.js'
