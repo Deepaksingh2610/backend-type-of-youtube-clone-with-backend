@@ -1,0 +1,23 @@
+interactive rebase in progress; onto f0eb12a
+Last commands done (2 commands done):
+   pick 5a6668e # fix: include duration in Cloudinary upload response
+   pick 1db071a # fix: resolve multer temp path issues for render deployment
+No commands remaining.
+You are currently rebasing branch 'main' on 'f0eb12a'.
+  (fix conflicts and then run "git rebase --continue")
+  (use "git rebase --skip" to skip this patch)
+  (use "git rebase --abort" to check out the original branch)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   src/middlewares/multer.middlewares.js
+
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+	both modified:   package.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	git_output.txt
+

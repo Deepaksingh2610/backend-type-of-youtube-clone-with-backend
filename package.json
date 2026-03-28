@@ -18,10 +18,10 @@
   "license": "ISC",
   "author": "Singh Deepak Jitendra",
   "type": "module",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "nodemon -r dotenv/config src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
@@ -39,7 +39,6 @@
     "mongoose": "^9.3.0",
     "mongoose-aggregate-paginate-v2": "^1.1.4",
     "multer": "^2.1.1",
-    "nodemailer": "^6.9.14",
     "set-cookie-parser": "^3.0.1"
   }
 }
