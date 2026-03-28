@@ -19,11 +19,7 @@
   "author": "Singh Deepak Jitendra",
   "type": "module",
   "main": "index.js",
-<<<<<<< HEAD
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
-  },
+
 =======
  "scripts": {
   "dev": "nodemon -r dotenv/config src/index.js",
