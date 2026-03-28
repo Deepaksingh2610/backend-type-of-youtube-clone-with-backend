@@ -37,15 +37,25 @@ const sendOTP = asyncHandler(async (req, res) => {
                 </div>
             `
         });
+        } catch (error) {
+    console.log("===== EMAIL ERROR START =====");
+    console.log(error);
+    console.log("===== EMAIL ERROR END =====");
 
-        return res
-            .status(200)
-            .json(new ApiResponse(200, {}, "OTP sent successfully to " + email));
-    } catch (error) {
-        console.error("Email send error:", error);
-        throw new ApiError(500, "Failed to send verification email. Please check your SMTP settings.");
-    }
-});
+    return res.status(500).json({
+        success: false,
+        message: error.message,
+    });
+}
+
+//         return res
+//             .status(200)
+//             .json(new ApiResponse(200, {}, "OTP sent successfully to " + email));
+//     } catch (error) {
+//         console.error("Email send error:", error);
+//         throw new ApiError(500, "Failed to send verification email. Please check your SMTP settings.");
+//     }
+// });
 
 const verifyOTP = asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
