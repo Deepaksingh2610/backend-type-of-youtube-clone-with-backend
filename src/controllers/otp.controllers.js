@@ -17,45 +17,31 @@ const sendOTP = asyncHandler(async (req, res) => {
 
     const otp = generateOTP();
 
-    // Store in DB (TTL handles cleanup)
+    // Store OTP in DB
     await OTP.create({ email, otp });
 
-    // Send via email
+    // Send email
     try {
         await sendEmail({
             email,
             subject: "Verification Code - VideoAdda",
             message: `Your verification code is: ${otp}. It will expire in 5 minutes.`,
-            html: `
-                <div style="font-family: Arial, sans-serif; background-color: #0f0f0f; color: white; padding: 40px; border-radius: 10px; text-align: center;">
-                    <h1 style="color: #ae7aff;">VideoAdda</h1>
-                    <p style="font-size: 18px;">Your verification code is:</p>
-                    <div style="background-color: #2a2a2a; border: 2px solid #ae7aff; display: inline-block; padding: 20px 40px; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #ae7aff; margin: 20px 0;">
-                        ${otp}
-                    </div>
-                    <p style="color: #888;">This code will expire in 5 minutes.</p>
-                </div>
-            `
+            html: `<h2>Your OTP is: ${otp}</h2>`
         });
-        } catch (error) {
-    console.log("===== EMAIL ERROR START =====");
-    console.log(error);
-    console.log("===== EMAIL ERROR END =====");
 
-    return res.status(500).json({
-        success: false,
-        message: error.message,
-    });
-}
+        // IMPORTANT: Response return karna zaroori hai
+        return res.status(200).json(
+            new ApiResponse(200, {}, "OTP sent successfully")
+        );
 
-//         return res
-//             .status(200)
-//             .json(new ApiResponse(200, {}, "OTP sent successfully to " + email));
-//     } catch (error) {
-//         console.error("Email send error:", error);
-//         throw new ApiError(500, "Failed to send verification email. Please check your SMTP settings.");
-//     }
-// });
+    } catch (error) {
+        console.log("===== EMAIL ERROR START =====");
+        console.log(error);
+        console.log("===== EMAIL ERROR END =====");
+
+        throw new ApiError(500, "Failed to send verification email");
+    }
+});
 
 const verifyOTP = asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
@@ -74,12 +60,11 @@ const verifyOTP = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid OTP");
     }
 
-    // OTP is valid, we can delete it now or let TTL do it
     await OTP.deleteOne({ _id: latestOTP._id });
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, { verified: true }, "Email verified successfully"));
+    return res.status(200).json(
+        new ApiResponse(200, { verified: true }, "Email verified successfully")
+    );
 });
 
 export { sendOTP, verifyOTP };
