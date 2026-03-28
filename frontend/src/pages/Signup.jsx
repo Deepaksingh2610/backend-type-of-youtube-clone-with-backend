@@ -15,12 +15,8 @@ const Signup = () => {
   const [avatar, setAvatar] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [previews, setPreviews] = useState({ avatar: '', coverImage: '' });
-  const [otp, setOtp] = useState("");
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [otpLoading, setOtpLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e, type) => {
@@ -37,53 +33,8 @@ const Signup = () => {
     }
   };
 
-  const handleSendOtp = async () => {
-    if (!formData.email) {
-      setError("Please enter your email first");
-      return;
-    }
-    setOtpLoading(true);
-    setError("");
-    try {
-      await axiosInstance.post("/otp/send-otp", { email: formData.email });
-      setIsOtpSent(true);
-      alert("OTP sent to your email!");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to send OTP");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp) {
-      setError("Please enter the OTP");
-      return;
-    }
-    setOtpLoading(true);
-    setError("");
-    try {
-      const response = await axiosInstance.post("/otp/verify-otp", { 
-        email: formData.email, 
-        otp 
-      });
-      if (response.data.data.verified) {
-        setIsVerified(true);
-        alert("Email verified successfully!");
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Invalid OTP");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isVerified) {
-      setError("Please verify your email first");
-      return;
-    }
     if (!avatar) {
       setError("Avatar is required");
       setLoading(false);
@@ -135,61 +86,17 @@ const Signup = () => {
               required
             />
             
-            <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-300">Email</label>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 bg-secondary border border-secondary p-2 rounded-lg outline-none focus:border-accent disabled:opacity-50"
-                  value={formData.email}
-                  disabled={isOtpSent}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-                {!isVerified && (
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    className="whitespace-nowrap h-[42px]"
-                    onClick={handleSendOtp}
-                    loading={otpLoading && !isOtpSent}
-                    disabled={isOtpSent}
-                  >
-                    {isOtpSent ? "Sent" : "Send OTP"}
-                  </Button>
-                )}
-              </div>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full bg-secondary border border-secondary p-2 rounded-lg outline-none focus:border-accent"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
             </div>
-
-            {isOtpSent && !isVerified && (
-              <div className="flex flex-col gap-1 animate-in fade-in slide-in-from-top-2">
-                <label className="text-sm font-medium text-gray-300">Enter OTP</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="6-digit code"
-                    className="flex-1 bg-secondary border border-secondary p-2 rounded-lg outline-none focus:border-accent"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="primary" 
-                    onClick={handleVerifyOtp}
-                    loading={otpLoading}
-                  >
-                    Verify
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {isVerified && (
-              <div className="text-sm text-green-500 flex items-center gap-2 font-medium bg-green-500/10 p-2 rounded-lg border border-green-500/20">
-                 ✓ Email Verified Successfully
-              </div>
-            )}
 
             <Input
               label="Username"
@@ -246,7 +153,6 @@ const Signup = () => {
               type="submit" 
               loading={loading} 
               className="w-full mt-auto"
-              disabled={!isVerified}
             >
               Create Account
             </Button>
