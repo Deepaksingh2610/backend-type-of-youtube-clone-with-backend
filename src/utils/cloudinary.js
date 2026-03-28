@@ -15,7 +15,11 @@ cloudinary.config({
         })
         //file has been uploaded successfuly
         fs.unlinkSync(localFilePath)
-        return response
+        // Always return secure https url
+        return {
+           url: response.secure_url,
+      public_id: response.public_id
+        }
     } catch (error) {
         fs.unlinkSync(localFilePath) //remove the locally saved temporey files as the upload operation failed
         return null;
