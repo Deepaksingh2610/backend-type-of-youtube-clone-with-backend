@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import sendEmail from "./utils/mail.js";   // SMTP test ke liye
 
 const app = express();
 
@@ -17,22 +18,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static("public"));
 
-// 6️⃣ Test route
+// Home route
 app.get("/", (req, res) => {
   res.send("API is running successfully");
 });
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true
-// }));
 
+// 🔥 SMTP TEST ROUTE
+app.get("/test-email", async (req, res) => {
+  try {
+    await sendEmail({
+      email: "singh26102003@gmail.com",
+      subject: "Test Email from VideoAdda",
+      message: "SMTP is working",
+      html: "<h1>SMTP Working ✅</h1>"
+    });
 
+    res.send("Email sent successfully");
+  } catch (error) {
+    console.log("SMTP TEST ERROR:", error);
+    res.status(500).send(error.message);
+  }
+});
 
 //routes import
 import userRouter from './routes/user.routes.js'
@@ -47,7 +53,6 @@ import playlistRouter from "./routes/playlist.routes.js"
 import dashboardRouter from "./routes/dashboard.routes.js"
 import notificationRouter from "./routes/notification.routes.js"
 
-// Import ApiError for error comparison
 import { ApiError } from "./utils/ApiError.js"
 
 //routes declaration
@@ -63,7 +68,7 @@ app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 
-// common error handling middleware
+// error handler
 app.use((err, req, res, next) => {
     if (err instanceof ApiError) {
         return res.status(err.statusCode).json({
@@ -74,7 +79,6 @@ app.use((err, req, res, next) => {
         })
     }
 
-    // Default to 500 if not an ApiError
     return res.status(500).json({
         success: false,
         message: err.message || "Something went wrong",
